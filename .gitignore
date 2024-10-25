@@ -90,3 +90,6 @@ typings/
 
 # Electron-Forge
 out/
+
+# images and videos from the public folder
+public/img

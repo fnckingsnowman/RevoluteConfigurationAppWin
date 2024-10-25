@@ -1,17 +1,18 @@
-// src/pages/ExampleConfig.jsx
+// src/pages/ConfigPage.jsx
 import React from 'react';
 
-const ExampleConfig = () => {
+const ConfigPage = ({ configName }) => {
   return (
     <div className="p-6 flex flex-col items-center">
-      <h1 className="text-3xl font-bold mb-4">Example Config Page</h1>
-      <p className="mb-8">Edit your configurations here.</p>
+      {/* Dynamic title based on configName prop */}
+      <h1 className="text-3xl font-bold mb-4">{configName} Page</h1>
+      <p className="mb-8">Edit your configurations for {configName} here.</p>
 
-      {/* Image centered */}
+      {/* Image and input fields */}
       <div className="relative">
         <img
-          src="./public/img/B1.png" // Replace with the correct path to your image
-          alt="Example"
+          src="/path/to/your/image.jpg" // Replace with the correct path to your image
+          alt="Config Example"
           className="w-64 h-64"
         />
 
@@ -22,7 +23,7 @@ const ExampleConfig = () => {
             type="text"
             id="leftRotation"
             className="border border-gray-300 p-1 rounded"
-            placeholder="Left Rotation"
+            placeholder="Enter value"
           />
         </div>
 
@@ -33,7 +34,7 @@ const ExampleConfig = () => {
             type="text"
             id="rightRotation"
             className="border border-gray-300 p-1 rounded"
-            placeholder="Right Rotation"
+            placeholder="Enter value"
           />
         </div>
       </div>
@@ -66,4 +67,4 @@ const ExampleConfig = () => {
   );
 };
 
-export default ExampleConfig;
+export default ConfigPage;
