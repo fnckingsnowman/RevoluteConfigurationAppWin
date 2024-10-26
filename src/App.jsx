@@ -2,12 +2,12 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/sidebar.jsx';
-import ExampleConfig from './pages/ExampleConfig.jsx';
 import Settings from './pages/Settings.jsx';
-import ConfigPage from './pages/ConfigPage.jsx'; // Import the new ConfigPage component
+import ConfigPage from './pages/ConfigPage.jsx';
+import Discover from './pages/Discover.jsx';
+import Panel from './pages/Panel.jsx';
 
 const App = () => {
-  // State to track dynamically added configuration tabs
   const [configTabs, setConfigTabs] = useState([]);
 
   // Function to add a new configuration tab
@@ -25,25 +25,28 @@ const App = () => {
     setConfigTabs((prevTabs) => prevTabs.map((tab, i) => (i === index ? newName : tab)));
   };
 
+  // Function to reorder tabs
+  const handleReorderTabs = (reorderedTabs) => {
+    setConfigTabs(reorderedTabs);
+  };
+
   return (
     <div className="flex">
       <Router>
-        {/* Sidebar on the left */}
         <Sidebar
           configTabs={configTabs}
           onAddTab={handleAddTab}
           onDeleteTab={handleDeleteTab}
           onRenameTab={handleRenameTab}
+          onReorderTabs={handleReorderTabs} // Pass the reorder function
         />
 
-        {/* Main content area */}
         <div className="flex-1 p-6">
           <Routes>
-            {/* Static ExampleConfig and Settings Routes */}
-            <Route path="/example-config" element={<ExampleConfig />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/discover" element={<Discover />} />
+            <Route path="/panel" element={<Panel />} />
 
-            {/* Dynamically generate routes for each unique config tab */}
             {configTabs.map((tab, index) => (
               <Route
                 key={index}
