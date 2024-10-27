@@ -76,17 +76,17 @@ const Sidebar = ({ configTabs, onAddTab, onDeleteTab, onRenameTab, onReorderTabs
         <div>
           <div className="p-6 text-2xl font-bold">Revolute Configuration</div>
 
-          <nav className="flex flex-col space-y-4">
-            <Link to="/discover" className="px-8 py-2 hover:bg-gray-700 rounded">
+          <nav className="flex flex-col space-y-4 px-4">
+            <Link to="/discover" className="px-4 py-2 hover:bg-gray-700 rounded">
               Discover
             </Link>
-            <Link to="/panel" className="px-8 py-2 hover:bg-gray-700 rounded">
+            <Link to="/panel" className="px-4 py-2 hover:bg-gray-700 rounded">
               Surface Dial Panel
             </Link>
 
             <hr className="border-t border-gray-400 my-4 mx-4" />
 
-            <div className="overflow-y-auto max-h-[calc(100vh-21rem)] px-4">
+            <div className="overflow-y-auto max-h-[calc(100vh-21rem)] ">
               {configTabs.map((tab, index) => (
                 <div key={index} className="relative group">
                   {renamingTab === index ? (

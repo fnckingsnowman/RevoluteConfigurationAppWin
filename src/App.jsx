@@ -41,7 +41,7 @@ const App = () => {
           onReorderTabs={handleReorderTabs} // Pass the reorder function
         />
 
-        <div className="flex-1 p-6">
+        <div className="flex-1">
           <Routes>
             <Route path="/settings" element={<Settings />} />
             <Route path="/discover" element={<Discover />} />
