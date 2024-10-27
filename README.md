@@ -1,3 +1,15 @@
+# Revolute configuration app for windows desktop version
+
+This version of the Revolute configuration app is made using Electron + React + Tailwind which was supposed to make my life easier; i mean it does make my life easier in most ways but fuck its such a pain in the ass when shit doesnt work cuz it just doesnt.
+
+Anyways this is basically an upgrade from the old version of the Revolute config app for windows vers i wrote before which should be that other repo of mine called RevoAppWin which was written only using electron and the basic web dev bullshit and that one pretty much shat itself cuz none of the frontend and backend was working together and so i had to start using React and Tailwind.
+
+Right i forgot to mention that this app is designed to configure and customize the functionalities of the Revolute Scrollwheel Smart Dial whatever fuck so that the user can do whatever they want with it in their computers. This version of the app should be the most complete and functional version (i hope).
+
+
+
+
+
 # Electron Boilerplate with React 18, Tailwind and JS
 
 This is simple template (boilerplate) for your first [Electron.js](https://www.electronjs.org/) app. Made with [electron-forge](https://www.electronforge.io/).
