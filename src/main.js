@@ -1,5 +1,14 @@
 const { app, BrowserWindow, shell } = require("electron");
 const path = require("path");
+/*
+const noble = require('@abandonware/noble');
+// The advertising UUID to scan for
+const TARGET_ADVERTISING_NAME = 'Revolute';
+// The service UUID to look for after connecting
+const TARGET_SERVICE_UUID = '00000000000000000000003323de1223';
+const PERIPHERAL_UUID = 'd02894667120';
+let scanning = false;
+*/
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -11,6 +20,7 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    icon: "public/icons/favicon.ico",
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       devTools: true,
@@ -33,6 +43,30 @@ const createWindow = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on("ready", createWindow);
+
+
+
+let tray = null;
+
+app.whenReady().then(() => {
+
+  //favicon for system tray
+  tray = new Tray(path.join(__dirname, 'public/icons/favicon.ico'));
+  const contextMenu = Menu.buildFromTemplate([
+      { label: 'Quit', click: () => { app.quit(); } }
+  ]);
+  tray.setContextMenu(contextMenu);
+  tray.setToolTip('Revolute config');
+
+  //createWindow();
+
+  app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+          //createWindow();
+      }
+  });
+});
+
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
