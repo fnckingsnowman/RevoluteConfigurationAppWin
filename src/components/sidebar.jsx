@@ -83,6 +83,9 @@ const Sidebar = ({ configTabs, onAddTab, onDeleteTab, onRenameTab, onReorderTabs
             <Link to="/panel" className="px-4 py-2 hover:bg-gray-700 rounded">
               Surface Dial Panel
             </Link>
+            <Link to="/ble" className="px-4 py-2 hover:bg-gray-700 rounded">
+             BlE connect
+            </Link>
 
             <hr className="border-t border-gray-400 my-4 mx-4" />
 

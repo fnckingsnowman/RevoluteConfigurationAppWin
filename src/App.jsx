@@ -6,6 +6,7 @@ import Settings from './pages/Settings.jsx';
 import ConfigPage from './pages/ConfigPage.jsx';
 import Discover from './pages/Discover.jsx';
 import Panel from './pages/Panel.jsx';
+import BLEpage from './pages/BLEpage.jsx';
 
 const App = () => {
   const [configTabs, setConfigTabs] = useState([]);
@@ -46,6 +47,7 @@ const App = () => {
             <Route path="/settings" element={<Settings />} />
             <Route path="/discover" element={<Discover />} />
             <Route path="/panel" element={<Panel />} />
+            <Route path="/ble" element={<BLEpage />} />
 
             {configTabs.map((tab, index) => (
               <Route
