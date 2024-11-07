@@ -1,5 +1,6 @@
-const { app, BrowserWindow, shell } = require("electron");
+const { app, Tray, BrowserWindow, shell, ipcMain } = require("electron");
 const path = require("path");
+const noble = require('@abandonware/noble');
 /*
 const noble = require('@abandonware/noble');
 // The advertising UUID to scan for
@@ -9,6 +10,8 @@ const TARGET_SERVICE_UUID = '00000000000000000000003323de1223';
 const PERIPHERAL_UUID = 'd02894667120';
 let scanning = false;
 */
+
+let scanning = false;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -39,13 +42,85 @@ const createWindow = () => {
   });
 };
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
+
 app.on("ready", createWindow);
 
+app.whenReady().then(() => {
+  //createWindow();
 
+  ipcMain.handle('start-scan', () => {
+      if (!scanning) {
+          scanning = true;
+          noble.startScanning();
+          console.log('Started scanning for BLE devices.');
+      }
+  });
 
+  ipcMain.handle('stop-scan', () => {
+      if (scanning) {
+          noble.stopScanning();
+          scanning = false;
+          console.log('Stopped scanning for BLE devices.');
+      }
+  });
+
+  const discoveredDevices = new Map();
+
+  noble.on('stateChange', state => {
+      if (state === 'poweredOn') {
+          if (scanning) {
+              noble.startScanning();
+          }
+      } else {
+          noble.stopScanning();
+      }
+  });
+
+  noble.on('discover', async peripheral => {
+      let deviceInfo = {
+          name: peripheral.advertisement.localName || 'Unnamed device',
+          uuid: peripheral.uuid,
+          rssi: peripheral.rssi,
+          services: []
+      };
+
+      // Check if device is already in the list
+      if (discoveredDevices.has(peripheral.uuid)) {
+          return; // Device already processed
+      }
+
+      discoveredDevices.set(peripheral.uuid, deviceInfo);
+
+      try {
+          await peripheral.connectAsync();
+          const services = await peripheral.discoverServicesAsync();
+          for (const service of services) {
+              let serviceInfo = {
+                  uuid: service.uuid,
+                  characteristics: []
+              };
+
+              const characteristics = await service.discoverCharacteristicsAsync();
+              for (const characteristic of characteristics) {
+                  serviceInfo.characteristics.push(characteristic.uuid);
+              }
+
+              deviceInfo.services.push(serviceInfo);
+          }
+
+          await peripheral.disconnectAsync();
+      } catch (error) {
+          deviceInfo.error = error.message;
+      }
+
+      // Notify renderer process about new device
+      BrowserWindow.getAllWindows().forEach(win => {
+          win.webContents.send('device-discovered', deviceInfo);
+      });
+  });
+});
+
+/*
 let tray = null;
 
 app.whenReady().then(() => {
@@ -66,11 +141,9 @@ app.whenReady().then(() => {
       }
   });
 });
+*/
 
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
@@ -78,12 +151,8 @@ app.on("window-all-closed", () => {
 });
 
 app.on("activate", () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
+
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
 });
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
