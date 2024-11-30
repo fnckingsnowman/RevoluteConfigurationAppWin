@@ -1,77 +1,54 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 const BLEpage = () => {
+  const [device, setDevice] = useState(null);
+
   useEffect(() => {
-    // Add event listeners for BLE scan buttons
-    const startScanBtn = document.getElementById('startScanBtn');
-    const stopScanBtn = document.getElementById('stopScanBtn');
-    const resultsDiv = document.getElementById('results');
+    // Handle incoming device info
+    const handleDeviceDiscovered = (deviceInfo) => {
+      console.log('Device discovered:', deviceInfo);
+      setDevice(deviceInfo); // Set the state to display the device info
+    };
 
-    if (startScanBtn) {
-      startScanBtn.addEventListener('click', () => {
-        console.log('Starting BLE scan...');
-        window.api.startScan();
-      });
-    } else {
-      console.warn('startScanBtn not found in BLEpage');
-    }
+    // Register for the device-discovered event
+    window.api.onDeviceDiscovered(handleDeviceDiscovered);
 
-    if (stopScanBtn) {
-      stopScanBtn.addEventListener('click', () => {
-        console.log('Stopping BLE scan...');
-        window.api.stopScan();
-      });
-    } else {
-      console.warn('stopScanBtn not found in BLEpage');
-    }
-
-    if (window.api && resultsDiv) {
-      window.api.onDeviceDiscovered(device => {
-        const deviceHTML = `
-          <div>
-            <h2>${device.name}</h2>
-            <p>UUID: ${device.uuid}</p>
-            <p>RSSI: ${device.rssi}</p>
-            <h3>Services:</h3>
-            <ul>
-              ${device.services.map(service => `
-                <li>
-                  <strong>Service UUID:</strong> ${service.uuid}
-                  <ul>
-                    ${service.characteristics.map(char => `<li>Characteristic UUID: ${char}</li>`).join('')}
-                  </ul>
-                </li>
-              `).join('')}
-            </ul>
-          </div>
-        `;
-        resultsDiv.insertAdjacentHTML('beforeend', deviceHTML);
-      });
-    } else {
-      console.warn('resultsDiv or window.api not available in BLEpage');
-    }
-
-    // Cleanup event listeners on unmount
+    // Cleanup when the component unmounts
     return () => {
-      if (startScanBtn) {
-        startScanBtn.removeEventListener('click', () => window.api.startScan());
-      }
-      if (stopScanBtn) {
-        stopScanBtn.removeEventListener('click', () => window.api.stopScan());
-      }
+      window.api.onDeviceDiscovered(() => {}); // Removing the event listener
     };
   }, []);
 
   return (
     <div className="p-6">
       <h1 className="text-3xl font-bold">BLE Connect Page</h1>
-      <button className="w-40 bg-gray-800 text-white p-2" id="startScanBtn">
+      <button
+        className="w-40 bg-gray-800 text-white p-2"
+        onClick={() => window.api.startScan()}
+      >
         Start BLE Scan
       </button>
-      <button className="w-40 bg-gray-800 text-white p-2" id="stopScanBtn">
+      <button
+        className="w-40 bg-gray-800 text-white p-2"
+        onClick={() => window.api.stopScan()}
+      >
         Stop BLE Scan
       </button>
-      <div id="results"></div>
+
+      <div className="mt-4">
+        <h2 className="text-xl font-semibold">Filtered Device:</h2>
+        {device ? (
+          <div>
+            <p><strong>Name:</strong> {device.name}</p>
+            <p><strong>UUID:</strong> {device.uuid}</p>
+            <p><strong>RSSI:</strong> {device.rssi}</p>
+            <p><strong>Advertised UUIDs:</strong> {device.serviceUuids.join(', ')}</p>
+            <p><strong>Manufacturer Data:</strong> {device.manufacturerData}</p>
+          </div>
+        ) : (
+          <p>No matching device found yet.</p>
+        )}
+      </div>
     </div>
   );
 };

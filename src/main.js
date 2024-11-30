@@ -1,15 +1,9 @@
-const { app, Tray, BrowserWindow, shell, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, shell } = require("electron");
 const path = require("path");
 const noble = require('@abandonware/noble');
-/*
-const noble = require('@abandonware/noble');
-// The advertising UUID to scan for
-const TARGET_ADVERTISING_NAME = 'Revolute';
-// The service UUID to look for after connecting
-const TARGET_SERVICE_UUID = '00000000000000000000003323de1223';
-const PERIPHERAL_UUID = 'd02894667120';
-let scanning = false;
-*/
+
+// The target 128-bit advertising UUID to scan for
+const TARGET_ADVERTISING_UUID = '000015231212efde1523785feabcd133';
 
 let scanning = false;
 
@@ -19,7 +13,6 @@ if (require("electron-squirrel-startup")) {
 }
 
 const createWindow = () => {
-  // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
@@ -42,107 +35,82 @@ const createWindow = () => {
   });
 };
 
-
 app.on("ready", createWindow);
 
 app.whenReady().then(() => {
-  //createWindow();
-
   ipcMain.handle('start-scan', () => {
-      if (!scanning) {
-          scanning = true;
-          noble.startScanning();
-          console.log('Started scanning for BLE devices.');
-      }
+    if (!scanning) {
+      scanning = true;
+      noble.startScanning([TARGET_ADVERTISING_UUID], false);  // Scan for the specific 128-bit UUID
+      console.log('Started scanning for BLE devices with target UUID:', TARGET_ADVERTISING_UUID);
+    }
   });
 
   ipcMain.handle('stop-scan', () => {
-      if (scanning) {
-          noble.stopScanning();
-          scanning = false;
-          console.log('Stopped scanning for BLE devices.');
-      }
+    if (scanning) {
+      noble.stopScanning();
+      scanning = false;
+      console.log('Stopped scanning for BLE devices.');
+    }
   });
 
   const discoveredDevices = new Map();
 
   noble.on('stateChange', state => {
-      if (state === 'poweredOn') {
-          if (scanning) {
-              noble.startScanning();
-          }
-      } else {
-          noble.stopScanning();
+    if (state === 'poweredOn') {
+      if (scanning) {
+        noble.startScanning([TARGET_ADVERTISING_UUID], false);  // Re-initiating scan if powered on
       }
+    } else {
+      noble.stopScanning();
+    }
   });
 
   noble.on('discover', async peripheral => {
-      let deviceInfo = {
-          name: peripheral.advertisement.localName || 'Unnamed device',
-          uuid: peripheral.uuid,
-          rssi: peripheral.rssi,
-          services: []
-      };
+    const { advertisement } = peripheral;
 
-      // Check if device is already in the list
-      if (discoveredDevices.has(peripheral.uuid)) {
-          return; // Device already processed
-      }
+    // Log the raw advertisement data and UUIDs
+    console.log('Discovered Peripheral:', peripheral.uuid);
+    console.log('Advertisement Data:', advertisement);
 
-      discoveredDevices.set(peripheral.uuid, deviceInfo);
+    // Check if the device has the target advertising UUID
+    let matchFound = false;
+    if (advertisement.serviceUuids) {
+      advertisement.serviceUuids.forEach((uuid) => {
+        console.log('Checking UUID:', uuid);
 
-      try {
-          await peripheral.connectAsync();
-          const services = await peripheral.discoverServicesAsync();
-          for (const service of services) {
-              let serviceInfo = {
-                  uuid: service.uuid,
-                  characteristics: []
-              };
-
-              const characteristics = await service.discoverCharacteristicsAsync();
-              for (const characteristic of characteristics) {
-                  serviceInfo.characteristics.push(characteristic.uuid);
-              }
-
-              deviceInfo.services.push(serviceInfo);
-          }
-
-          await peripheral.disconnectAsync();
-      } catch (error) {
-          deviceInfo.error = error.message;
-      }
-
-      // Notify renderer process about new device
-      BrowserWindow.getAllWindows().forEach(win => {
-          win.webContents.send('device-discovered', deviceInfo);
+        // Compare UUIDs (make sure we check the correct 128-bit UUID)
+        if (uuid.toLowerCase() === TARGET_ADVERTISING_UUID.toLowerCase()) {
+          console.log('Device matches the target advertising UUID:', uuid);
+          matchFound = true;
+        }
       });
+    }
+
+    // If the device doesn't match, return
+    if (!matchFound) {
+      console.log('Device does not have the target advertising UUID.');
+      return;
+    }
+
+    // Device has the target UUID; send relevant data to renderer
+    const deviceInfo = {
+      name: advertisement.localName || 'Unnamed device',
+      uuid: peripheral.uuid,
+      rssi: peripheral.rssi,
+      serviceUuids: advertisement.serviceUuids,
+      manufacturerData: advertisement.manufacturerData?.toString('hex') || 'None',
+    };
+
+    // Log the discovered device info
+    console.log('Discovered Device:', deviceInfo);
+
+    // Send the device info to the renderer process
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send('device-discovered', deviceInfo);
+    });
   });
 });
-
-/*
-let tray = null;
-
-app.whenReady().then(() => {
-
-  //favicon for system tray
-  tray = new Tray(path.join(__dirname, 'public/icons/favicon.ico'));
-  const contextMenu = Menu.buildFromTemplate([
-      { label: 'Quit', click: () => { app.quit(); } }
-  ]);
-  tray.setContextMenu(contextMenu);
-  tray.setToolTip('Revolute config');
-
-  //createWindow();
-
-  app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
-          //createWindow();
-      }
-  });
-});
-*/
-
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
@@ -151,7 +119,6 @@ app.on("window-all-closed", () => {
 });
 
 app.on("activate", () => {
-
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
