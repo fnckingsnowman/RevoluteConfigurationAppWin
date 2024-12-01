@@ -112,6 +112,28 @@ app.whenReady().then(() => {
   });
 });
 
+ipcMain.handle('connect-to-device', async (event, deviceUuid) => {
+  try {
+    // Start scanning if not already scanning
+    if (!noble.isScanning) {
+      await noble.startScanningAsync([], false);
+    }
+
+    const device = await noble.discoverDevicesAsync({ filters: [{ id: deviceUuid }] });
+
+    if (device) {
+      await device.connectAsync();
+      console.log(`Connected to device: ${deviceUuid}`);
+      return 'Connected';
+    } else {
+      throw new Error('Device not found');
+    }
+  } catch (error) {
+    console.error('Error connecting to device:', error);
+    throw error;
+  }
+});
+
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
