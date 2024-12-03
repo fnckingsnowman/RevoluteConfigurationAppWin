@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 const BLEpage = () => {
   const [device, setDevice] = useState(null);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState('');
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     // Handle incoming device info
@@ -21,20 +20,31 @@ const BLEpage = () => {
     };
   }, []);
 
-  // Handle device connection
-  const connectToDevice = async () => {
+  const handleConnect = async () => {
     if (!device) return;
-    setIsConnecting(true);
-    setConnectionStatus('Connecting...');
-
     try {
-      await window.api.connectToDevice(device.uuid); // Assuming you implement this API in your backend
-      setConnectionStatus('Connected');
+      console.log('Attempting to connect to device:', device);
+      const connected = await window.api.connectToDevice(device.uuid); // Replace with your backend logic
+      if (connected) {
+        setIsConnected(true);
+        console.log('Connected to device');
+      }
     } catch (error) {
-      console.error('Connection failed:', error);
-      setConnectionStatus('Connection failed');
-    } finally {
-      setIsConnecting(false);
+      console.error('Failed to connect:', error);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!device) return;
+    try {
+      console.log('Attempting to disconnect from device:', device);
+      const disconnected = await window.api.disconnectFromDevice(device.uuid); // Replace with your backend logic
+      if (disconnected) {
+        setIsConnected(false);
+        console.log('Disconnected from device');
+      }
+    } catch (error) {
+      console.error('Failed to disconnect:', error);
     }
   };
 
@@ -67,7 +77,7 @@ const BLEpage = () => {
               className="w-20 h-20 object-cover rounded-lg mr-4"
             />
             {/* Device Information */}
-            <div className="flex flex-col">
+            <div className="flex-1">
               <h3 className="text-lg font-bold mb-2">{device.name || 'Unnamed Device'}</h3>
               <p className="text-sm text-white"><strong>UUID:</strong> {device.uuid}</p>
               <p className="text-sm text-white"><strong>RSSI:</strong> {device.rssi}</p>
@@ -76,21 +86,16 @@ const BLEpage = () => {
                 {device.serviceUuids?.length ? device.serviceUuids.join(', ') : 'None'}
               </p>
               <p className="text-sm text-white"><strong>Manufacturer Data:</strong> {device.manufacturerData || 'None'}</p>
-
-              {/* Connection Status and Button */}
-              <div className="mt-4">
-                {connectionStatus && (
-                  <p className="text-sm text-yellow-200">{connectionStatus}</p>
-                )}
-                <button
-                  onClick={connectToDevice}
-                  className="mt-2 w-32 bg-green-600 text-white p-2 rounded-lg shadow hover:bg-green-500 transition"
-                  disabled={isConnecting}
-                >
-                  {isConnecting ? 'Connecting...' : 'Connect'}
-                </button>
-              </div>
             </div>
+            {/* Connect/Disconnect Button */}
+            <button
+              className={`ml-4 px-4 py-2 rounded-lg text-white ${
+                isConnected ? 'bg-red-600 hover:bg-red-500' : 'bg-blue-600 hover:bg-blue-500'
+              }`}
+              onClick={isConnected ? handleDisconnect : handleConnect}
+            >
+              {isConnected ? 'Disconnect' : 'Connect'}
+            </button>
           </div>
         ) : (
           <p className="text-gray-400">No matching device found yet.</p>

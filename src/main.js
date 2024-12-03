@@ -5,6 +5,8 @@ const noble = require('@abandonware/noble');
 // The target 128-bit advertising UUID to scan for
 const TARGET_ADVERTISING_UUID = '000015231212efde1523785feabcd133';
 
+let connectedPeripheral = null;
+
 let scanning = false;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -54,7 +56,40 @@ app.whenReady().then(() => {
     }
   });
 
-  const discoveredDevices = new Map();
+ ipcMain.handle('connect-to-device', async (event, uuid) => {
+  console.log(`Attempting to connect to device with UUID: ${uuid}`);
+  try {
+    const peripheral = noble._peripherals[uuid];
+    if (!peripheral) {
+      throw new Error('Peripheral not found');
+    }
+
+    await peripheral.connectAsync();
+    console.log(`Connected to device: ${uuid}`);
+    connectedPeripheral = peripheral; // Track connected device
+    return true;
+  } catch (error) {
+    console.error('Failed to connect:', error);
+    return false;
+  }
+});
+
+ipcMain.handle('disconnect-from-device', async (event, uuid) => {
+  console.log(`Attempting to disconnect from device with UUID: ${uuid}`);
+  try {
+    if (connectedPeripheral && connectedPeripheral.uuid === uuid) {
+      await connectedPeripheral.disconnectAsync();
+      console.log(`Disconnected from device: ${uuid}`);
+      connectedPeripheral = null;
+      return true;
+    }
+    throw new Error('No connected device matches the UUID');
+  } catch (error) {
+    console.error('Failed to disconnect:', error);
+    return false;
+  }
+});
+  
 
   noble.on('stateChange', state => {
     if (state === 'poweredOn') {
@@ -110,28 +145,6 @@ app.whenReady().then(() => {
       win.webContents.send('device-discovered', deviceInfo);
     });
   });
-});
-
-ipcMain.handle('connect-to-device', async (event, deviceUuid) => {
-  try {
-    // Start scanning if not already scanning
-    if (!noble.isScanning) {
-      await noble.startScanningAsync([], false);
-    }
-
-    const device = await noble.discoverDevicesAsync({ filters: [{ id: deviceUuid }] });
-
-    if (device) {
-      await device.connectAsync();
-      console.log(`Connected to device: ${deviceUuid}`);
-      return 'Connected';
-    } else {
-      throw new Error('Device not found');
-    }
-  } catch (error) {
-    console.error('Error connecting to device:', error);
-    throw error;
-  }
 });
 
 app.on("window-all-closed", () => {

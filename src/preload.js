@@ -3,9 +3,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
-    startScan: () => ipcRenderer.invoke('start-scan'),
-    stopScan: () => ipcRenderer.invoke('stop-scan'),
-    onDeviceDiscovered: (callback) => ipcRenderer.on('device-discovered', (event, device) => callback(device)),
-    connectToDevice: (deviceUuid) => ipcRenderer.invoke('connect-to-device', deviceUuid),
-  });
-  
+  startScan: () => ipcRenderer.invoke('start-scan'),
+  stopScan: () => ipcRenderer.invoke('stop-scan'),
+  onDeviceDiscovered: (callback) => ipcRenderer.on('device-discovered', (event, device) => callback(device)),
+  connectToDevice: (uuid) => ipcRenderer.invoke('connect-to-device', uuid),
+  disconnectFromDevice: (uuid) => ipcRenderer.invoke('disconnect-from-device', uuid),
+});
