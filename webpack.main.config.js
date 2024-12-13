@@ -9,6 +9,7 @@ module.exports = {
 
   externals: {
     '@abandonware/noble': 'commonjs @abandonware/noble',
+    'electron-squirrel-startup': 'commonjs2 electron-squirrel-startup',
   },
 
   target: 'electron-main', // Ensures Webpack targets Electron's main process
