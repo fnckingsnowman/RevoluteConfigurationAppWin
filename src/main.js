@@ -56,39 +56,47 @@ app.whenReady().then(() => {
     }
   });
 
- ipcMain.handle('connect-to-device', async (event, uuid) => {
-  console.log(`Attempting to connect to device with UUID: ${uuid}`);
-  try {
-    const peripheral = noble._peripherals[uuid];
-    if (!peripheral) {
-      throw new Error('Peripheral not found');
+  ipcMain.handle('connect-to-device', async (event, uuid) => {
+    console.log(`Attempting to connect to device with UUID: ${uuid}`);
+    try {
+      const peripheral = noble._peripherals[uuid];
+      if (!peripheral) {
+        throw new Error('Peripheral not found');
+      }
+  
+      // Use connectAsync to trigger connection and potential pairing
+      await peripheral.connectAsync();
+      console.log(`Connected to device: ${uuid}`);
+  
+      // Optional: Discover services to validate the connection further
+      const services = await peripheral.discoverServicesAsync();
+      console.log(`Discovered services for ${uuid}:`, services.map((s) => s.uuid));
+  
+      connectedPeripheral = peripheral;
+      return true; // Indicate success
+    } catch (error) {
+      console.error('Failed to connect to device:', error);
+      return false; // Indicate failure
     }
+  });
+  
 
-    await peripheral.connectAsync();
-    console.log(`Connected to device: ${uuid}`);
-    connectedPeripheral = peripheral; // Track connected device
-    return true;
-  } catch (error) {
-    console.error('Failed to connect:', error);
-    return false;
-  }
-});
-
-ipcMain.handle('disconnect-from-device', async (event, uuid) => {
-  console.log(`Attempting to disconnect from device with UUID: ${uuid}`);
-  try {
-    if (connectedPeripheral && connectedPeripheral.uuid === uuid) {
+  ipcMain.handle('disconnect-from-device', async (event, uuid) => {
+    console.log(`Attempting to disconnect from device with UUID: ${uuid}`);
+    try {
+      if (!connectedPeripheral || connectedPeripheral.uuid !== uuid) {
+        throw new Error('No connected peripheral matches the UUID');
+      }
+  
       await connectedPeripheral.disconnectAsync();
       console.log(`Disconnected from device: ${uuid}`);
       connectedPeripheral = null;
-      return true;
+      return true; // Indicate success
+    } catch (error) {
+      console.error('Failed to disconnect from device:', error);
+      return false; // Indicate failure
     }
-    throw new Error('No connected device matches the UUID');
-  } catch (error) {
-    console.error('Failed to disconnect:', error);
-    return false;
-  }
-});
+  });
   
 
   noble.on('stateChange', state => {

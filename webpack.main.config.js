@@ -15,6 +15,7 @@ module.exports = {
   target: 'electron-main', // Ensures Webpack targets Electron's main process
 
   resolve: {
+    modules: [path.resolve(__dirname, "node_modules"), "node_modules"],
     extensions: ['.js', '.jsx', '.json', '.node'],
     fallback: {
       fs: false,  // Disable 'fs' since Electron uses Node.js API directly
