@@ -9,6 +9,9 @@ let connectedPeripheral = null;
 
 let scanning = false;
 
+//solve for gpu processing errors that are unnecessary
+app.disableHardwareAcceleration();
+
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
   app.quit();
